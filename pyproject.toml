@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shopify-gql-cli"
+version = "1.0.0"
+description = "CLI tool for the Shopify Admin GraphQL API"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.0.0",
+    "prompt-toolkit>=3.0.0",
+]
+
+[project.scripts]
+shopify-gql-cli = "shopify_gql_cli.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
