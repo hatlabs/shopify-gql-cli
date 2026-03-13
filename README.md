@@ -46,7 +46,7 @@ shopify-gql-cli orders cancel 12345 --reason CUSTOMER
 shopify-gql-cli orders close 12345
 ```
 
-Orders default to `status:open`. Pass `--query "status:any"` to see all orders.
+Orders default to `status:open`, except when filtering by `name:` (which defaults to `status:any`). Pass an explicit `status:` filter to override.
 
 ### Products
 
