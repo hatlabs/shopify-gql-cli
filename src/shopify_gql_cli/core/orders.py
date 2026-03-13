@@ -109,6 +109,11 @@ def _ensure_gid(raw_id: str, resource: str = "Order") -> str:
     return f"gid://shopify/{resource}/{raw_id}"
 
 
+def _has_filter(query: str, key: str) -> bool:
+    """Check whether *query* already contains a ``key:`` filter."""
+    return query.startswith(f"{key}:") or f" {key}:" in query
+
+
 def list_orders(
     client: ShopifyClient,
     first: int = 10,
@@ -117,16 +122,19 @@ def list_orders(
 ) -> dict:
     """Query orders with optional search string.
 
-    Defaults to open orders only. Pass an explicit ``status:`` filter
-    (e.g. ``status:any`` or ``status:closed``) to override.
+    Defaults to open orders only unless the query targets a specific order
+    (e.g. ``name:``), in which case ``status:any`` is used so that
+    closed / fulfilled orders are not silently excluded.  Pass an explicit
+    ``status:`` filter to override in either case.
     """
-    has_status = query and (
-        query.startswith("status:") or " status:" in query
-    )
-    if has_status:
+    if not query:
+        effective_query = "status:open"
+    elif _has_filter(query, "status"):
         effective_query = query
+    elif _has_filter(query, "name"):
+        effective_query = f"status:any {query}"
     else:
-        effective_query = f"status:open {query}" if query else "status:open"
+        effective_query = f"status:open {query}"
     result = client.execute(
         LIST_ORDERS_QUERY, {"first": first, "after": after, "query": effective_query}
     )
