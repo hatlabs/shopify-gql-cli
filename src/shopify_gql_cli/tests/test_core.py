@@ -12,6 +12,7 @@ from shopify_gql_cli.core.client import (
     make_client,
 )
 from shopify_gql_cli.core.graphql import execute_raw, parse_variables
+from shopify_gql_cli.core.orders import _has_filter
 
 
 # ---------------------------------------------------------------------------
@@ -88,3 +89,56 @@ class TestParseVariables:
         result = parse_variables('{"first": 10, "query": "status:active"}')
         assert result["first"] == 10
         assert result["query"] == "status:active"
+
+
+# ---------------------------------------------------------------------------
+# orders.py tests
+# ---------------------------------------------------------------------------
+
+
+class TestHasFilter:
+    def test_at_start(self):
+        assert _has_filter("status:open", "status") is True
+
+    def test_after_space(self):
+        assert _has_filter("name:123 status:any", "status") is True
+
+    def test_absent(self):
+        assert _has_filter("financial_status:paid", "status") is False
+
+    def test_name_filter(self):
+        assert _has_filter("name:#A2488", "name") is True
+
+
+class TestListOrdersQuery:
+    """Verify the effective query string built by list_orders."""
+
+    def _capture(self, query: str | None) -> str:
+        from unittest.mock import MagicMock
+        from shopify_gql_cli.core.orders import list_orders
+
+        client = MagicMock()
+        client.execute.return_value = {
+            "data": {"orders": {"edges": [], "pageInfo": {}}}
+        }
+        list_orders(client, query=query)
+        variables = client.execute.call_args[0][1]
+        return variables["query"]
+
+    def test_no_query_defaults_open(self):
+        assert self._capture(None) == "status:open"
+
+    def test_plain_query_prepends_open(self):
+        assert self._capture("financial_status:paid") == "status:open financial_status:paid"
+
+    def test_explicit_status_preserved(self):
+        assert self._capture("status:any") == "status:any"
+
+    def test_explicit_status_mid_query(self):
+        assert self._capture("financial_status:paid status:closed") == "financial_status:paid status:closed"
+
+    def test_name_query_uses_status_any(self):
+        assert self._capture("name:#A2488") == "status:any name:#A2488"
+
+    def test_name_query_with_explicit_status(self):
+        assert self._capture("status:open name:#A2488") == "status:open name:#A2488"
