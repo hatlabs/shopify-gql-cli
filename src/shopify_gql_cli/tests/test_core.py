@@ -125,19 +125,19 @@ class TestListOrdersQuery:
         variables = client.execute.call_args[0][1]
         return variables["query"]
 
-    def test_no_query_defaults_open(self):
-        assert self._capture(None) == "status:open"
+    def test_no_query_defaults_any(self):
+        assert self._capture(None) == "status:any"
 
-    def test_plain_query_prepends_open(self):
-        assert self._capture("financial_status:paid") == "status:open financial_status:paid"
+    def test_plain_query_prepends_any(self):
+        assert self._capture("financial_status:paid") == "status:any financial_status:paid"
 
     def test_explicit_status_preserved(self):
-        assert self._capture("status:any") == "status:any"
+        assert self._capture("status:open") == "status:open"
 
     def test_explicit_status_mid_query(self):
         assert self._capture("financial_status:paid status:closed") == "financial_status:paid status:closed"
 
-    def test_name_query_uses_status_any(self):
+    def test_name_query_defaults_any(self):
         assert self._capture("name:#A2488") == "status:any name:#A2488"
 
     def test_name_query_with_explicit_status(self):
