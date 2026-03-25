@@ -122,19 +122,15 @@ def list_orders(
 ) -> dict:
     """Query orders with optional search string.
 
-    Defaults to open orders only unless the query targets a specific order
-    (e.g. ``name:``), in which case ``status:any`` is used so that
-    closed / fulfilled orders are not silently excluded.  Pass an explicit
-    ``status:`` filter to override in either case.
+    Defaults to ``status:any`` (all orders).  Pass an explicit ``status:``
+    filter to restrict results (e.g. ``status:open``).
     """
     if not query:
-        effective_query = "status:open"
+        effective_query = "status:any"
     elif _has_filter(query, "status"):
         effective_query = query
-    elif _has_filter(query, "name"):
-        effective_query = f"status:any {query}"
     else:
-        effective_query = f"status:open {query}"
+        effective_query = f"status:any {query}"
     result = client.execute(
         LIST_ORDERS_QUERY, {"first": first, "after": after, "query": effective_query}
     )
